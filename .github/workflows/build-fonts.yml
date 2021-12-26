@@ -74,10 +74,5 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: Release.txt
-    - name: Release
-        uses: fnkr/github-action-ghr@v1
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: result/**.ttf
-          generate_release_notes: true
+        files: result/**.ttf
+        generate_release_notes: true
