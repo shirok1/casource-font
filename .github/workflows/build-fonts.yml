@@ -3,7 +3,7 @@ on: [push, pull_request]
 env:
   BUILD_TYPE: Release
 jobs:
-  Build-Merger:
+  Build-And-Merge:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout font-merger repo
@@ -24,3 +24,44 @@ jobs:
     - name: List Build
       run: |
         ls ${{github.workspace}}/build
+    - name: Download Cascadia Code
+      uses: robinraju/release-downloader@v1.3
+      with:
+        repository: "microsoft/"
+        latest: true
+        fileName: "*"
+        out-file-path: "downloaded"
+    - name: Download Source Han Sans
+      run: wget -o downloaded/SourceHanSansCN.zip https://github.com/adobe-fonts/source-han-sans/releases/latest/download/SourceHanSansCN.zip
+    - name: Unzip BASE fonts
+      run: unzip downloaded/CascadiaCode-*.zip -j -d base
+    - name: Unzip CJK fonts
+      run: unzip downloaded/SourceHanSansCN.zip -j -d cjk
+    - name: Dump BASE fonts
+      run: |
+        build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd
+        build/otfccdump base/CascadiaCode-SemiLightItalic.ttf -o otd/base/regular-italic.otd
+        build/otfccdump base/CascadiaCode-SemiBold.ttf -o otd/base/bold.otd
+        build/otfccdump base/CascadiaCode-SemiBoldItalic.ttf -o otd/base/bold-italic.otd
+    - name: Dump CJK fonts
+      run: |
+        build/otfccdump cjk/SourceHanSansCN-Regular.otf -o otd/cjk/regular.otd
+        build/otfccdump cjk/SourceHanSansCN-Bold.otf -o otd/cjk/bold.otd
+    - name: Merge dumps
+      run: |
+        build/merge-otd -o otd/result/regular.otd otd/base/regular.otd otd/cjk/regular.otd
+        build/merge-otd -o otd/result/regular-italic.otd otd/base/regular-italic.otd otd/cjk/regular.otd
+        build/merge-otd -o otd/result/bold.otd otd/base/bold.otd otd/cjk/bold.otd
+        build/merge-otd -o otd/result/bold-italic.otd otd/base/bold-italic.otd otd/cjk/bold.otd
+    - name: Build fonts
+      run: |
+        build/otfccbuild otd/result/regular.otd -O2 -o "result/raw/Casource Han CN Regular.ttf"
+        build/otfccbuild otd/result/regular-italic.otd -O2 -o "result/raw/Casource Han CN Regular Italic.ttf"
+        build/otfccbuild otd/result/bold.otd -O2 -o "result/raw/Casource Han CN Bold.ttf"
+        build/otfccbuild otd/result/bold-italic.otd -O2 -o "result/raw/Casource Han CN Bold Italic.ttf"
+    - name: Patch Nerd Fonts
+      run: docker run -v result/raw:/in -v result/nerd:/out nerdfonts/patcher
+    - name: Patch Nerd Fonts (with -c)
+      run: docker run -v result/raw:/in -v result/nerd:/out nerdfonts/patcher -c
+    - name: List result
+      run: ls -R result
