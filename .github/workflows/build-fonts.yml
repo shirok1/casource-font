@@ -65,8 +65,19 @@ jobs:
         build/otfccbuild otd/result/bold.otd -O2 -o "result/raw/Casource Han CN Bold.ttf"
         build/otfccbuild otd/result/bold-italic.otd -O2 -o "result/raw/Casource Han CN Bold Italic.ttf"
     - name: Patch Nerd Fonts
-      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher || echo Some error?
     - name: Patch Nerd Fonts (with -c)
-      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c || echo Some error? (again)
     - name: List result
       run: ls -R result
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: Release.txt
+    - name: Release
+        uses: fnkr/github-action-ghr@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: result/**.ttf
+          generate_release_notes: true
