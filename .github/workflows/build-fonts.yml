@@ -1,5 +1,8 @@
 name: Build Fonts Action
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - "v*"
 jobs:
   Build-And-Merge:
     runs-on: ubuntu-latest
@@ -20,46 +23,88 @@ jobs:
       run: cmake --build build --config Release
     - name: List Build
       run: ls build
+
+
+
+    - name: Get latest release of Cascadia Code
+      uses: rez0n/actions-github-release@main
+      id: base_release
+      env:
+        repository: "microsoft/cascadia-code"
+        type: "stable"
+    - name: Get latest release of Source Han Sans
+      uses: rez0n/actions-github-release@main
+      id: cjk_release
+      env:
+        repository: "adobe-fonts/source-han-sans"
+        type: "stable"
+    - name: Cache merged otd
+      id: cache-merged
+      uses: actions/cache@v2
+      with:
+        path: otd/result
+        key: base-${{steps.base_release.outputs.release}}-cjk-${{steps.cjk_release.outputs.release}}
+
+
+    - name: Cache base otd
+      id: cache-base
+      uses: actions/cache@v2
+      if: steps.cache-merged.outputs.cache-hit != 'true'
+      with:
+        path: otd/base
+        key: at-${{steps.base_release.outputs.release}}
     - name: Download Cascadia Code
       uses: robinraju/release-downloader@v1.3
+      if: steps.cache-base.outputs.cache-hit != 'true'
       with:
         repository: "microsoft/cascadia-code"
         latest: true
         fileName: "*"
         out-file-path: "downloaded"
+    - name: Unzip and dump BASE fonts
+      if: steps.cache-base.outputs.cache-hit != 'true'
+      run: |
+        unzip -j downloaded/CascadiaCode-*.zip -d base
+        mkdir -p otd/base
+        build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd
+        build/otfccdump base/CascadiaCode-SemiLightItalic.ttf -o otd/base/regular-italic.otd
+        build/otfccdump base/CascadiaCode-SemiBold.ttf -o otd/base/bold.otd
+        build/otfccdump base/CascadiaCode-SemiBoldItalic.ttf -o otd/base/bold-italic.otd
+
+    - name: Cache CJK otd
+      id: cache-cjk
+      uses: actions/cache@v2
+      if: steps.cache-merged.outputs.cache-hit != 'true'
+      with:
+        path: otd/cjk
+        key: at-${{steps.cjk_release.outputs.release}}
     - name: Download Source Han Sans
+      if: steps.cache-cjk.outputs.cache-hit != 'true'
       uses: robinraju/release-downloader@v1.3
       with:
         repository: "adobe-fonts/source-han-sans"
         latest: true
         fileName: "SourceHanSansCN.zip"
         out-file-path: "downloaded"
-    - name: List downloaded
-      run: ls -l downloaded
-    - name: Unzip BASE fonts
-      run: unzip -j downloaded/CascadiaCode-*.zip -d base
-    - name: Unzip CJK fonts
-      run: unzip -j downloaded/SourceHanSansCN.zip -d cjk
-    - run: mkdir -p otd/base otd/cjk otd/result
-    - run: mkdir -p result/raw result/nerd result/nerd-c
-    - name: Dump BASE fonts
+    - name: Unzip and dump CJK fonts
+      if: steps.cache-cjk.outputs.cache-hit != 'true'
       run: |
-        build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd
-        build/otfccdump base/CascadiaCode-SemiLightItalic.ttf -o otd/base/regular-italic.otd
-        build/otfccdump base/CascadiaCode-SemiBold.ttf -o otd/base/bold.otd
-        build/otfccdump base/CascadiaCode-SemiBoldItalic.ttf -o otd/base/bold-italic.otd
-    - name: Dump CJK fonts
-      run: |
+        unzip -j downloaded/SourceHanSansCN.zip -d cjk
+        mkdir -p otd/cjk
         build/otfccdump cjk/SourceHanSansCN-Regular.otf -o otd/cjk/regular.otd
         build/otfccdump cjk/SourceHanSansCN-Bold.otf -o otd/cjk/bold.otd
+
     - name: Merge dumps
+      if: steps.cache-merged.outputs.cache-hit != 'true'
       run: |
+        mkdir -p otd/result
         build/merge-otd -o otd/result/regular.otd -n "Casource Han CN" -s "Regular" otd/base/regular.otd otd/cjk/regular.otd
         build/merge-otd -o otd/result/regular-italic.otd -n "Casource Han CN" -s "Regular Italic" otd/base/regular-italic.otd otd/cjk/regular.otd
         build/merge-otd -o otd/result/bold.otd -n "Casource Han CN" -s "Bold" otd/base/bold.otd otd/cjk/bold.otd
         build/merge-otd -o otd/result/bold-italic.otd -n "Casource Han CN" -s "Bold Italic" otd/base/bold-italic.otd otd/cjk/bold.otd
     - name: Build fonts
       run: |
+        mkdir -p result/raw result/nerd result/nerd-c
         build/otfccbuild otd/result/regular.otd -O2 -o "result/raw/Casource Han CN Regular.ttf"
         build/otfccbuild otd/result/regular-italic.otd -O2 -o "result/raw/Casource Han CN Regular Italic.ttf"
         build/otfccbuild otd/result/bold.otd -O2 -o "result/raw/Casource Han CN Bold.ttf"
@@ -67,7 +112,7 @@ jobs:
     - name: Patch Nerd Fonts
       run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher || echo Some error?
     - name: Patch Nerd Fonts (with -c)
-      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c || echo Some error? (again)
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c || echo Some error? again
     - name: List result
       run: ls -R result
     - name: Release
