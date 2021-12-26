@@ -1,0 +1,22 @@
+name: Build Fonts Action
+on: [push, pull_request]
+env:
+  BUILD_TYPE: Release
+jobs:
+  Build Fonts:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout font-merger repo
+      uses: actions/checkout@v2
+      with:
+        repository: shirok1/font-merger
+        path: font-merger
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1
+    - name: Configure CMake
+      run: cmake -S ${{github.workspace}}/font-merger -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+    - name: List
+      run: |
+        ls ${{github.workspace}}/build
