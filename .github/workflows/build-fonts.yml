@@ -3,7 +3,7 @@ on: [push, pull_request]
 env:
   BUILD_TYPE: Release
 jobs:
-  Build Fonts:
+  Build-Merger:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout font-merger repo
