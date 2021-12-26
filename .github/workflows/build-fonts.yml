@@ -27,10 +27,15 @@ jobs:
       with:
         repository: "microsoft/cascadia-code"
         latest: true
-        fileName: "*"
+        fileName: "CascadiaCode-*.zip"
         out-file-path: "downloaded"
     - name: Download Source Han Sans
-      run: wget -o downloaded/SourceHanSansCN.zip https://github.com/adobe-fonts/source-han-sans/releases/latest/download/SourceHanSansCN.zip
+      uses: robinraju/release-downloader@v1.3
+      with:
+        repository: "adobe-fonts/source-han-sans"
+        latest: true
+        fileName: "SourceHanSansCN.zip"
+        out-file-path: "downloaded"
     - name: List downloaded
       run: ls -l downloaded
     - name: Unzip BASE fonts
