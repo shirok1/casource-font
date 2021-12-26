@@ -54,10 +54,10 @@ jobs:
         build/otfccdump cjk/SourceHanSansCN-Bold.otf -o otd/cjk/bold.otd
     - name: Merge dumps
       run: |
-        build/merge-otd -o otd/result/regular.otd otd/base/regular.otd otd/cjk/regular.otd
-        build/merge-otd -o otd/result/regular-italic.otd otd/base/regular-italic.otd otd/cjk/regular.otd
-        build/merge-otd -o otd/result/bold.otd otd/base/bold.otd otd/cjk/bold.otd
-        build/merge-otd -o otd/result/bold-italic.otd otd/base/bold-italic.otd otd/cjk/bold.otd
+        build/merge-otd -o otd/result/regular.otd -n "Casource Han CN" -s "Regular" otd/base/regular.otd otd/cjk/regular.otd
+        build/merge-otd -o otd/result/regular-italic.otd -n "Casource Han CN" -s "Regular Italic" otd/base/regular-italic.otd otd/cjk/regular.otd
+        build/merge-otd -o otd/result/bold.otd -n "Casource Han CN" -s "Bold" otd/base/bold.otd otd/cjk/bold.otd
+        build/merge-otd -o otd/result/bold-italic.otd -n "Casource Han CN" -s "Bold Italic" otd/base/bold-italic.otd otd/cjk/bold.otd
     - name: Build fonts
       run: |
         build/otfccbuild otd/result/regular.otd -O2 -o "result/raw/Casource Han CN Regular.ttf"
