@@ -38,7 +38,7 @@ jobs:
       env:
         repository: "adobe-fonts/source-han-sans"
         type: "stable"
-    - name: Cache merged otd
+    - name: Cache merged dump
       id: cache-merged
       uses: actions/cache@v2
       with:
@@ -46,7 +46,7 @@ jobs:
         key: base-${{steps.base_release.outputs.release}}-cjk-${{steps.cjk_release.outputs.release}}
 
 
-    - name: Cache base otd
+    - name: Cache base dump
       id: cache-base
       uses: actions/cache@v2
       if: steps.cache-merged.outputs.cache-hit != 'true'
@@ -58,7 +58,7 @@ jobs:
       if: steps.cache-base.outputs.cache-hit != 'true'
       with:
         repository: "microsoft/cascadia-code"
-        latest: true
+        tag: ${{steps.base_release.outputs.release}}
         fileName: "*"
         out-file-path: "downloaded"
     - name: Unzip and dump BASE fonts
@@ -71,7 +71,7 @@ jobs:
         build/otfccdump base/CascadiaCode-SemiBold.ttf -o otd/base/bold.otd
         build/otfccdump base/CascadiaCode-SemiBoldItalic.ttf -o otd/base/bold-italic.otd
 
-    - name: Cache CJK otd
+    - name: Cache CJK dump
       id: cache-cjk
       uses: actions/cache@v2
       if: steps.cache-merged.outputs.cache-hit != 'true'
@@ -83,7 +83,7 @@ jobs:
       uses: robinraju/release-downloader@v1.3
       with:
         repository: "adobe-fonts/source-han-sans"
-        latest: true
+        tag: ${{steps.cjk_release.outputs.release}}
         fileName: "SourceHanSansCN.zip"
         out-file-path: "downloaded"
     - name: Unzip and dump CJK fonts
@@ -110,14 +110,17 @@ jobs:
         build/otfccbuild otd/result/bold.otd -O2 -o "result/raw/Casource Han CN Bold.ttf"
         build/otfccbuild otd/result/bold-italic.otd -O2 -o "result/raw/Casource Han CN Bold Italic.ttf"
     - name: Patch Nerd Fonts
-      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher || echo Some error?
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher --no-progressbars || echo Some error?
     - name: Patch Nerd Fonts (with -c)
-      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c || echo Some error? again
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c --no-progressbars || echo Some error? again
     - name: List result
       run: ls -R result
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: result/**.ttf
+        files: |
+          result/raw/*.ttf
+          result/nerd/*.ttf
+          result/nerd-c/*.ttf
         generate_release_notes: true
