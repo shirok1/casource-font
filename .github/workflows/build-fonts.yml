@@ -42,12 +42,8 @@ jobs:
       run: unzip -j downloaded/CascadiaCode-*.zip -d base
     - name: Unzip CJK fonts
       run: unzip -j downloaded/SourceHanSansCN.zip -d cjk
-    - run: mkdir otd/base
-    - run: mkdir otd/cjk
-    - run: mkdir otd/result
-    - run: mkdir result/raw
-    - run: mkdir result/nerd
-    - run: mkdir result/nerd-c
+    - run: mkdir -p otd/base otd/cjk otd/result
+    - run: mkdir -p result/raw result/nerd result/nerd-c
     - name: Dump BASE fonts
       run: |
         build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd
