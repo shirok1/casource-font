@@ -13,8 +13,7 @@ jobs:
         ref: dev
         path: font-merger
     - name: List Source
-      run: |
-        ls ${{github.workspace}}/font-merger
+      run: ls ${{github.workspace}}/font-merger
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1
     - name: Configure CMake
@@ -22,12 +21,11 @@ jobs:
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
     - name: List Build
-      run: |
-        ls ${{github.workspace}}/build
+      run: ls ${{github.workspace}}/build
     - name: Download Cascadia Code
       uses: robinraju/release-downloader@v1.3
       with:
-        repository: "microsoft/"
+        repository: "microsoft/cascadia-code"
         latest: true
         fileName: "*"
         out-file-path: "downloaded"
