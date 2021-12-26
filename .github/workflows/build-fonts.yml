@@ -1,7 +1,5 @@
 name: Build Fonts Action
 on: [push, pull_request]
-env:
-  BUILD_TYPE: Release
 jobs:
   Build-And-Merge:
     runs-on: ubuntu-latest
@@ -13,15 +11,15 @@ jobs:
         ref: dev
         path: font-merger
     - name: List Source
-      run: ls ${{github.workspace}}/font-merger
+      run: ls font-merger
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1
     - name: Configure CMake
-      run: cmake -S ${{github.workspace}}/font-merger -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+      run: cmake -S font-merger -B build -DCMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build build --config Release
     - name: List Build
-      run: ls ${{github.workspace}}/build
+      run: ls build
     - name: Download Cascadia Code
       uses: robinraju/release-downloader@v1.3
       with:
@@ -67,8 +65,8 @@ jobs:
         build/otfccbuild otd/result/bold.otd -O2 -o "result/raw/Casource Han CN Bold.ttf"
         build/otfccbuild otd/result/bold-italic.otd -O2 -o "result/raw/Casource Han CN Bold Italic.ttf"
     - name: Patch Nerd Fonts
-      run: docker run -v result/raw:/in -v result/nerd:/out nerdfonts/patcher
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher
     - name: Patch Nerd Fonts (with -c)
-      run: docker run -v result/raw:/in -v result/nerd-c:/out nerdfonts/patcher -c
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c
     - name: List result
       run: ls -R result
