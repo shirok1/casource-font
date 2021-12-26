@@ -31,6 +31,8 @@ jobs:
         out-file-path: "downloaded"
     - name: Download Source Han Sans
       run: wget -o downloaded/SourceHanSansCN.zip https://github.com/adobe-fonts/source-han-sans/releases/latest/download/SourceHanSansCN.zip
+    - name: List downloaded
+      run: ls downloaded
     - name: Unzip BASE fonts
       run: unzip -j downloaded/CascadiaCode-*.zip -d base
     - name: Unzip CJK fonts
