@@ -42,6 +42,12 @@ jobs:
       run: unzip -j downloaded/CascadiaCode-*.zip -d base
     - name: Unzip CJK fonts
       run: unzip -j downloaded/SourceHanSansCN.zip -d cjk
+    - run: mkdir otd/base
+    - run: mkdir otd/cjk
+    - run: mkdir otd/result
+    - run: mkdir result/raw
+    - run: mkdir result/nerd
+    - run: mkdir result/nerd-c
     - name: Dump BASE fonts
       run: |
         build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd
@@ -67,6 +73,6 @@ jobs:
     - name: Patch Nerd Fonts
       run: docker run -v result/raw:/in -v result/nerd:/out nerdfonts/patcher
     - name: Patch Nerd Fonts (with -c)
-      run: docker run -v result/raw:/in -v result/nerd:/out nerdfonts/patcher -c
+      run: docker run -v result/raw:/in -v result/nerd-c:/out nerdfonts/patcher -c
     - name: List result
       run: ls -R result
