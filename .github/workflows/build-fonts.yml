@@ -27,7 +27,7 @@ jobs:
       with:
         repository: "microsoft/cascadia-code"
         latest: true
-        fileName: "CascadiaCode-*.zip"
+        fileName: "*"
         out-file-path: "downloaded"
     - name: Download Source Han Sans
       uses: robinraju/release-downloader@v1.3
