@@ -32,9 +32,9 @@ jobs:
     - name: Download Source Han Sans
       run: wget -o downloaded/SourceHanSansCN.zip https://github.com/adobe-fonts/source-han-sans/releases/latest/download/SourceHanSansCN.zip
     - name: Unzip BASE fonts
-      run: unzip downloaded/CascadiaCode-*.zip -j -d base
+      run: unzip -j downloaded/CascadiaCode-*.zip -d base
     - name: Unzip CJK fonts
-      run: unzip downloaded/SourceHanSansCN.zip -j -d cjk
+      run: unzip -j downloaded/SourceHanSansCN.zip -d cjk
     - name: Dump BASE fonts
       run: |
         build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd
