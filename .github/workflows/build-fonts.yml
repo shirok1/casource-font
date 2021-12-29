@@ -7,6 +7,8 @@ jobs:
   Build-And-Merge:
     runs-on: ubuntu-latest
     steps:
+
+    # Build Merger
     - name: Checkout font-merger repo
       uses: actions/checkout@v2
       with:
@@ -24,8 +26,7 @@ jobs:
     - name: List Build
       run: ls build
 
-
-
+    # Version Fetch And Check For Merged Cache
     - name: Get latest release of Cascadia Code
       uses: rez0n/actions-github-release@main
       id: base_release
@@ -45,7 +46,7 @@ jobs:
         path: otd/result
         key: base-${{steps.base_release.outputs.release}}-cjk-${{steps.cjk_release.outputs.release}}
 
-
+    # Base Dumping
     - name: Cache base dump
       id: cache-base
       uses: actions/cache@v2
@@ -66,11 +67,13 @@ jobs:
       run: |
         unzip -j downloaded/CascadiaCode-*.zip -d base
         mkdir -p otd/base
-        build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd
-        build/otfccdump base/CascadiaCode-SemiLightItalic.ttf -o otd/base/regular-italic.otd
-        build/otfccdump base/CascadiaCode-SemiBold.ttf -o otd/base/bold.otd
-        build/otfccdump base/CascadiaCode-SemiBoldItalic.ttf -o otd/base/bold-italic.otd
+        build/otfccdump base/CascadiaCode-SemiLight.ttf -o otd/base/regular.otd &
+        build/otfccdump base/CascadiaCode-SemiLightItalic.ttf -o otd/base/regular-italic.otd &
+        build/otfccdump base/CascadiaCode-SemiBold.ttf -o otd/base/bold.otd &
+        build/otfccdump base/CascadiaCode-SemiBoldItalic.ttf -o otd/base/bold-italic.otd &
+        wait
 
+    # CJK Dumping
     - name: Cache CJK dump
       id: cache-cjk
       uses: actions/cache@v2
@@ -91,30 +94,36 @@ jobs:
       run: |
         unzip -j downloaded/SourceHanSansCN.zip -d cjk
         mkdir -p otd/cjk
-        build/otfccdump cjk/SourceHanSansCN-Regular.otf -o otd/cjk/regular.otd
-        build/otfccdump cjk/SourceHanSansCN-Bold.otf -o otd/cjk/bold.otd
+        build/otfccdump cjk/SourceHanSansCN-Regular.otf -o otd/cjk/regular.otd &
+        build/otfccdump cjk/SourceHanSansCN-Bold.otf -o otd/cjk/bold.otd &
+        wait
 
+    # Merge, Build And Patch
     - name: Merge dumps
       if: steps.cache-merged.outputs.cache-hit != 'true'
       run: |
         mkdir -p otd/result
-        build/merge-otd -o otd/result/regular.otd -n "Casource Han CN" -s "Regular" otd/base/regular.otd otd/cjk/regular.otd
-        build/merge-otd -o otd/result/regular-italic.otd -n "Casource Han CN" -s "Regular Italic" otd/base/regular-italic.otd otd/cjk/regular.otd
-        build/merge-otd -o otd/result/bold.otd -n "Casource Han CN" -s "Bold" otd/base/bold.otd otd/cjk/bold.otd
-        build/merge-otd -o otd/result/bold-italic.otd -n "Casource Han CN" -s "Bold Italic" otd/base/bold-italic.otd otd/cjk/bold.otd
+        build/merge-otd -o otd/result/regular.otd -n "Casource Han CN" -s "Regular" otd/base/regular.otd otd/cjk/regular.otd &
+        build/merge-otd -o otd/result/regular-italic.otd -n "Casource Han CN" -s "Regular Italic" otd/base/regular-italic.otd otd/cjk/regular.otd &
+        build/merge-otd -o otd/result/bold.otd -n "Casource Han CN" -s "Bold" otd/base/bold.otd otd/cjk/bold.otd &
+        build/merge-otd -o otd/result/bold-italic.otd -n "Casource Han CN" -s "Bold Italic" otd/base/bold-italic.otd otd/cjk/bold.otd &
+        wait
     - name: Build fonts
       run: |
         mkdir -p result/raw result/nerd result/nerd-c
-        build/otfccbuild otd/result/regular.otd -O2 -o "result/raw/Casource Han CN Regular.ttf"
-        build/otfccbuild otd/result/regular-italic.otd -O2 -o "result/raw/Casource Han CN Regular Italic.ttf"
-        build/otfccbuild otd/result/bold.otd -O2 -o "result/raw/Casource Han CN Bold.ttf"
-        build/otfccbuild otd/result/bold-italic.otd -O2 -o "result/raw/Casource Han CN Bold Italic.ttf"
+        build/otfccbuild otd/result/regular.otd -O2 -o "result/raw/Casource Han CN Regular.ttf" &
+        build/otfccbuild otd/result/regular-italic.otd -O2 -o "result/raw/Casource Han CN Regular Italic.ttf" &
+        build/otfccbuild otd/result/bold.otd -O2 -o "result/raw/Casource Han CN Bold.ttf" &
+        build/otfccbuild otd/result/bold-italic.otd -O2 -o "result/raw/Casource Han CN Bold Italic.ttf" &
+        wait
     - name: Patch Nerd Fonts
       run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher --no-progressbars || echo Some error?
     - name: Patch Nerd Fonts (with -c)
       run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c --no-progressbars || echo Some error? again
     - name: List result
       run: ls -R result
+
+    # Release
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
