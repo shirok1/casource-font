@@ -115,7 +115,9 @@ jobs:
     - name: Patch Nerd Fonts
       run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher --no-progressbars || echo Some error?
     - name: Patch Nerd Fonts (with -c)
-      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher -c --no-progressbars || echo Some error? again
+      run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher \
+          --fontawesome --fontawesomeextension --fontlinux --octicons --codicons \
+          --powersymbols --pomicons --powerline --powerlineextra --weather --no-progressbars || echo Some error? again
     - name: List result
       run: ls -R result
 
