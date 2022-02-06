@@ -116,12 +116,12 @@ jobs:
       run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd:/out nerdfonts/patcher --no-progressbars || echo Some error?
     - name: Patch Nerd Fonts (with -c)
       run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher \
-          --fontawesome --fontawesomeextension --fontlinux --octicons --codicons \
+          --fontawesome --fontawesomeextension --fontlinux --octicons \
           --powersymbols --pomicons --powerline --powerlineextra --weather --no-progressbars || echo Some error? again
     - name: Rename complete Nerd Fonts
       run: |
         sudo apt install rename
-        rename 'y/\.ttf/\.Complete\.ttf/' ${{github.workspace}}/result/nerd-c/*
+        rename 's/\.ttf/\.Complete\.ttf/' ${{github.workspace}}/result/nerd-c/*
     - name: List result
       run: ls -R result
 
