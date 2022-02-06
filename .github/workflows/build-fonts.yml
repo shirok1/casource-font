@@ -119,7 +119,9 @@ jobs:
           --fontawesome --fontawesomeextension --fontlinux --octicons --codicons \
           --powersymbols --pomicons --powerline --powerlineextra --weather --no-progressbars || echo Some error? again
     - name: Rename complete Nerd Fonts
-      run: rename Nerd.Font.ttf Nerd.Font.Complete.ttf ${{github.workspace}}/result/nerd-c/*
+      run: |
+        sudo apt install rename
+        rename 'y/\.ttf/\.Complete\.ttf/' ${{github.workspace}}/result/nerd-c/*
     - name: List result
       run: ls -R result
 
