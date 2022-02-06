@@ -118,6 +118,8 @@ jobs:
       run: docker run -v ${{github.workspace}}/result/raw:/in -v ${{github.workspace}}/result/nerd-c:/out nerdfonts/patcher \
           --fontawesome --fontawesomeextension --fontlinux --octicons --codicons \
           --powersymbols --pomicons --powerline --powerlineextra --weather --no-progressbars || echo Some error? again
+    - name: Rename complete Nerd Fonts
+      run: rename Nerd.Font.ttf Nerd.Font.Complete.ttf ${{github.workspace}}/result/nerd-c/*
     - name: List result
       run: ls -R result
 
